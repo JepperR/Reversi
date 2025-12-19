@@ -1,0 +1,196 @@
+using System;
+using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Drawing;
+using System.Windows.Forms;
+
+Form scherm = new Form();
+scherm.Size = new Size(800, 800);
+scherm.BackColor = (Color.White);
+scherm.Text = "Reversi";
+
+//maken uitklaplijst voor opties spelbordgrootte
+ComboBox spelBordGrootte = new ComboBox();
+spelBordGrootte.DropDownStyle = ComboBoxStyle.DropDownList;
+spelBordGrootte.Location = new Point(620, 30);
+spelBordGrootte.Size = new Size(150, 20);
+spelBordGrootte.Items.AddRange(new object[] { "4", "6", "8", "10" });
+spelBordGrootte.SelectedItem = "6";
+
+//globale waardes
+int offset_x = 30;
+int offset_y = 30;
+int vakBreedte = 50;
+int vakHoogte = 50;
+Point hier = new Point(0, 0);
+int huidigeSpeler = 1;
+//waardes array berekenen
+int bordGrootte = int.Parse(spelBordGrootte.SelectedItem.ToString());
+int[,] vakjes = new int[bordGrootte, bordGrootte];
+
+//vakjes een startwaarde geven, waarbij 0 is leeg, 1 is blauw, 2 is rood
+vakjes[bordGrootte / 2 - 1, bordGrootte / 2 - 1] = 1;
+vakjes[bordGrootte / 2, bordGrootte / 2 - 1] = 2;
+vakjes[bordGrootte / 2 - 1, bordGrootte / 2] = 2;
+vakjes[bordGrootte / 2, bordGrootte / 2] = 1;
+
+
+//tekenen spelbord
+Label spelBord = new Label();
+spelBord.Location = new Point(0 + offset_x, 0 + offset_y);
+scherm.Controls.Add(spelBord);
+void updateBordGrootteLabel(int bordGrootte)
+{
+    Bitmap plaatje_spelBord = new Bitmap(50 * bordGrootte + 1, 50 * bordGrootte + 1);
+
+    spelBord.Size = new Size(plaatje_spelBord.Width, plaatje_spelBord.Height);
+}
+updateBordGrootteLabel(bordGrootte);
+
+// muislocatie volgen, mag eruit?
+void muisLocatie(object o, MouseEventArgs mea)
+{
+    hier = mea.Location;
+    spelBord.Invalidate();
+}
+
+void comboBoxVeranderd(object o, EventArgs ea)
+{
+    // nieuwe bordgrootte ophalen
+    bordGrootte = int.Parse(spelBordGrootte.SelectedItem.ToString());
+    updateBordGrootteLabel(bordGrootte);
+
+    vakjes = new int[bordGrootte, bordGrootte];
+
+    for (int x = 0; x < bordGrootte; x++)
+    {
+        for (int y = 0; y < bordGrootte; y++)
+        {
+            vakjes[x, y] = 0;
+        }
+    }
+
+    // startstenen opnieuw plaatsen
+    vakjes[bordGrootte / 2 - 1, bordGrootte / 2 - 1] = 1;
+    vakjes[bordGrootte / 2, bordGrootte / 2 - 1] = 2;
+    vakjes[bordGrootte / 2 - 1, bordGrootte / 2] = 2;
+    vakjes[bordGrootte / 2, bordGrootte / 2] = 1;
+
+    spelBord.Invalidate();
+}
+
+void tekenSpelBord(object o, PaintEventArgs pea)
+{
+
+    Graphics gr = pea.Graphics;
+    for (int dx = 0; dx < int.Parse(spelBordGrootte.SelectedItem.ToString()); dx++)
+    {
+        for (int dy = 0; dy < int.Parse(spelBordGrootte.SelectedItem.ToString()); dy++)
+        {
+            gr.DrawRectangle(Pens.Black, 0 + dx * vakBreedte, 0 + dy * vakHoogte, vakBreedte, vakHoogte);
+        }
+    }
+
+    Brush rood = new SolidBrush(Color.Red);
+    Brush blauw = new SolidBrush(Color.Blue);
+    for (int x = 0; x < bordGrootte; x++)
+    {
+        for (int y = 0; y < bordGrootte; y++)
+        {
+            if (vakjes[x, y] == 1)
+            {
+
+                gr.FillEllipse(blauw, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
+            }
+            if (vakjes[x, y] == 2)
+            {
+                gr.FillEllipse(rood, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
+            }
+        }
+    }
+
+
+}
+
+bool zorgtVoorInsluiten(int vak_x, int vak_y, int richting_x, int richting_y)
+{
+    //bordgrootte bepalen
+    bordGrootte = int.Parse(spelBordGrootte.SelectedItem.ToString());
+
+    //coördinaten van vakje dat gecontroleerd wordt
+    int controleren_x = vak_x + richting_x;
+    int controleren_y = vak_y + richting_y;
+
+    //ervoor zorgen dat het te controleren vakje niet buiten het bord valt
+    if (controleren_x >= 0 && controleren_y >= 0 && controleren_x < bordGrootte && controleren_y < bordGrootte)
+    {
+        //controleren of eerste vakje in gekozen richting een schijf van de tegenstander bevat
+        if (vakjes[controleren_x, controleren_y] == huidigeSpeler || vakjes[controleren_x, controleren_y] == 0)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    //ervoor zorgen dat gecontroleerd wordt zolang het te controleren vakje niet buiten het bord valt
+    while (controleren_x >= 0 && controleren_y >= 0 && controleren_x < bordGrootte && controleren_y < bordGrootte)
+    {
+        if (vakjes[controleren_x, controleren_y] == huidigeSpeler)
+        {
+            return true;
+        }
+
+        if (vakjes[controleren_x, controleren_y] == 0)
+        {
+            return false;
+        }
+
+        controleren_x += richting_x;
+        controleren_y += richting_y;
+    }
+    return false;
+}
+
+bool isGeldigeZet(int x, int y)
+{
+    if (vakjes[x, y] != 0)
+        return false;
+    //nog niet af
+    else
+        return true;
+}
+
+void doeZet(int vak_x, int vak_y)
+{
+    if (!isGeldigeZet(vak_x, vak_y)) return;
+
+    if (huidigeSpeler % 2 == 0)
+        vakjes[vak_x, vak_y] = 1;
+    if (huidigeSpeler % 2 != 0)
+        vakjes[vak_x, vak_y] = 2;
+}
+
+// muisklik tracken
+void klik(object o, MouseEventArgs mea)
+{
+    int vak_x = mea.X / vakBreedte;
+    int vak_y = mea.Y / vakHoogte;
+    System.Diagnostics.Debug.WriteLine($"{vak_x} {vak_y}");
+    if (!isGeldigeZet(vak_x, vak_y))
+        huidigeSpeler = huidigeSpeler;
+    else
+        huidigeSpeler = huidigeSpeler + 1;
+    doeZet(vak_x, vak_y);
+
+}
+
+
+spelBord.MouseMove += muisLocatie;
+spelBordGrootte.SelectionChangeCommitted += comboBoxVeranderd;
+spelBord.Paint += tekenSpelBord;
+spelBord.MouseClick += klik;
+scherm.Controls.Add(spelBordGrootte);
+Application.Run(scherm);
