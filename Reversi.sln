@@ -17,16 +17,24 @@ spelBordGrootte.Size = new Size(150, 20);
 spelBordGrootte.Items.AddRange(new object[] { "4", "6", "8", "10" });
 spelBordGrootte.SelectedItem = "6";
 
+//extra textbox om te tonen wie aan de beurt is
+TextBox isAanDeBeurt = new TextBox();
+isAanDeBeurt.Location = new Point(640, 100);
+isAanDeBeurt.Size = new Size(120, 30);
+isAanDeBeurt.Text = "Rood begint aan zet";
+isAanDeBeurt.ReadOnly = true;
+scherm.Controls.Add(isAanDeBeurt);
+
 //globale waardes
 int offset_x = 30;
 int offset_y = 30;
 int vakBreedte = 50;
 int vakHoogte = 50;
 Point hier = new Point(0, 0);
-int huidigeSpeler = 1;
+int huidigeSpeler = 2;
 //waardes array berekenen
 int bordGrootte = int.Parse(spelBordGrootte.SelectedItem.ToString());
-int[,] vakjes  = new int[bordGrootte, bordGrootte];
+int[,] vakjes = new int[bordGrootte, bordGrootte];
 
 //vakjes een startwaarde geven, waarbij 0 is leeg, 1 is blauw, 2 is rood
 vakjes[bordGrootte / 2 - 1, bordGrootte / 2 - 1] = 1;
@@ -41,17 +49,11 @@ spelBord.Location = new Point(0 + offset_x, 0 + offset_y);
 scherm.Controls.Add(spelBord);
 void updateBordGrootteLabel(int bordGrootte)
 {
-Bitmap plaatje_spelBord = new Bitmap(50 * bordGrootte + 1,50 * bordGrootte + 1);
+    Bitmap plaatje_spelBord = new Bitmap(50 * bordGrootte + 1, 50 * bordGrootte + 1);
 
-spelBord.Size = new Size(plaatje_spelBord.Width, plaatje_spelBord.Height);
+    spelBord.Size = new Size(plaatje_spelBord.Width, plaatje_spelBord.Height);
 }
 updateBordGrootteLabel(bordGrootte);
-// muislocatie volgen
-void muisLocatie(object o, MouseEventArgs mea)
-{
-    hier = mea.Location;
-    spelBord.Invalidate();
-}
 
 void comboBoxVeranderd(object o, EventArgs ea)
 {
@@ -68,6 +70,9 @@ void comboBoxVeranderd(object o, EventArgs ea)
             vakjes[x, y] = 0;
         }
     }
+
+    //textbox isAanDeBeurt starttext geven
+    isAanDeBeurt.Text = "Rood begint aan zet";
 
     // startstenen opnieuw plaatsen
     vakjes[bordGrootte / 2 - 1, bordGrootte / 2 - 1] = 1;
@@ -111,49 +116,179 @@ void tekenSpelBord(object o, PaintEventArgs pea)
 
 }
 
-bool isIngesloten(int vak_x, int vak_y)
+bool zorgtVoorInsluiten(int vak_x, int vak_y, int richting_x, int richting_y)
 {
-    while (vak_x - 1 > 0)
-    {
-        if (vakjes[vak_x, vak_y] == huidigeSpeler)
-            return true;
-        else
-            vak_x --;
-    }
-    while (vak_x - 1 > 0 && vak_y - 1 > 0)
-    {
-        if (vakjes[vak_x, vak_y] == huidigeSpeler)
-        {
-            return true;
-        }
-        else
-        {
-            vak_x --;
-            vak_y --;
-        }
-    }
-        
+    //bordgrootte bepalen
+    bordGrootte = int.Parse(spelBordGrootte.SelectedItem.ToString());
 
- 
+    //coördinaten van vakje dat gecontroleerd wordt
+    int controleren_x = vak_x + richting_x;
+    int controleren_y = vak_y + richting_y;
+
+    //ervoor zorgen dat het te controleren vakje niet buiten het bord valt
+    if (controleren_x >= 0 && controleren_y >= 0 && controleren_x < bordGrootte && controleren_y < bordGrootte)
+    {
+        //controleren of eerste vakje in gekozen richting een schijf van de tegenstander bevat
+        if (vakjes[controleren_x, controleren_y] == huidigeSpeler || vakjes[controleren_x, controleren_y] == 0)
+        {
+            return false;
+        }
+    }
+    else
+    {
         return false;
+    }
+
+    //ervoor zorgen dat gecontroleerd wordt zolang het te controleren vakje niet buiten het bord valt
+    while (controleren_x >= 0 && controleren_y >= 0 && controleren_x < bordGrootte && controleren_y < bordGrootte)
+    {
+        if (vakjes[controleren_x, controleren_y] == huidigeSpeler)
+        {
+            return true;
+        }
+
+        if (vakjes[controleren_x, controleren_y] == 0)
+        {
+            return false;
+        }
+
+        controleren_x += richting_x;
+        controleren_y += richting_y;
+    }
+    return false;
 }
+//richting omdraaien om alle schijfjes te kunnen controleren
+void draaiRichtingOm(int vak_x, int vak_y, int richting_x, int richting_y)
+{
+    int x = vak_x + richting_x;
+    int y = vak_y + richting_y;
+
+    // Draai alle stenen om totdat we weer een steen van de huidige speler tegenkomen
+    while (x >= 0 && y >= 0 && x < bordGrootte && y < bordGrootte && vakjes[x, y] != huidigeSpeler)
+    {
+        if (vakjes[x, y] != 0)
+        {
+            vakjes[x, y] = huidigeSpeler;
+        }
+
+        x += richting_x;
+        y += richting_y;
+    }
+}
+
 bool isGeldigeZet(int x, int y)
 {
     if (vakjes[x, y] != 0)
         return false;
-    //nog niet af
-    else 
-        return true;
+
+    int[] richtingen = { -1, 0, 1 };
+
+    foreach (int rx in richtingen)
+    {
+        foreach (int ry in richtingen)
+        {
+            if (rx == 0 && ry == 0) continue;
+
+            if (zorgtVoorInsluiten(x, y, rx, ry))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+void flipSchijfjes(int vak_x, int vak_y, int richting_x, int richting_y)
+{
+    //coordinaten om te controleren
+    int controleren_x = vak_x + richting_x;
+    int controleren_y = vak_y + richting_y;
+
+    //checken dat er daadwerkelijk ingesloten wordt
+    if (!zorgtVoorInsluiten(vak_x, vak_y, richting_x, richting_y))
+        return;
+
+    //alles omdraaien tot we een eigen kleur tegenkomen
+    while (vakjes[controleren_x, controleren_y] != huidigeSpeler)
+    {
+        vakjes[controleren_x, controleren_y] = huidigeSpeler;
+        controleren_x += richting_x;
+        controleren_y += richting_y;
+
+    }
+
+}
+
+// ook flippen als door een flip een steen wordt ingesloten
+bool blijfFlippen(int vak_x, int vak_y)
+{
+    bool isGeflipt = false;
+    int[] richtingen = { -1, 0, 1 };
+
+    foreach (int richting_x in richtingen)
+    {
+        foreach (int richting_y in richtingen)
+        {
+            if (richting_x == 0 && richting_y == 0) continue;
+
+            if (zorgtVoorInsluiten(vak_x, vak_y, richting_x, richting_y))
+            {
+                draaiRichtingOm(vak_x,vak_y,richting_x, richting_y);
+                isGeflipt = true;
+            }
+        }
+    }
+    return isGeflipt;
 }
 
 void doeZet(int vak_x, int vak_y)
 {
-    if (!isGeldigeZet(vak_x,vak_y)) return;
-    
-    if (huidigeSpeler % 2 == 0)
-        vakjes[vak_x,vak_y] = 1;
-    if (huidigeSpeler % 2 != 0)
-        vakjes[vak_x, vak_y] = 2;
+    if (!isGeldigeZet(vak_x, vak_y)) return;
+
+    vakjes[vak_x, vak_y] = huidigeSpeler;
+
+    int[] richtingen = { -1, 0, 1 };
+
+    // Flipt schijfjes als ze ingesloten zijn
+    foreach (int rx in richtingen)
+    {
+        foreach (int ry in richtingen)
+        {
+            if (rx == 0 && ry == 0) continue;
+
+            if (zorgtVoorInsluiten(vak_x, vak_y, rx, ry))
+            {
+                flipSchijfjes(vak_x, vak_y, rx, ry);
+            }
+        }
+    }
+    // Blijf flippen zolang er nieuwe insluitingen ontstaan
+    while (blijfFlippen(vak_x, vak_y))
+    {
+
+    }
+}
+    //checken of er überhaupt geldige zetten zijn
+    bool heeftGeldigeZet(int speler)
+{
+    for (int x = 0; x < bordGrootte; x++)
+    {
+        for (int y = 0; y < bordGrootte; y++)
+        {
+            if (vakjes[x, y] == 0)
+            {
+                // tijdelijk huidigeSpeler aanpassen
+                int oudeSpeler = huidigeSpeler;
+
+                bool geldig = isGeldigeZet(x, y);
+
+                huidigeSpeler = oudeSpeler;
+
+                if (geldig)
+                    return true;
+            }
+        }
+    }
+    return false;
 }
 
 // muisklik tracken
@@ -163,15 +298,42 @@ void klik(object o, MouseEventArgs mea)
     int vak_y = mea.Y / vakHoogte;
     System.Diagnostics.Debug.WriteLine($"{vak_x} {vak_y}");
     if (!isGeldigeZet(vak_x, vak_y))
-        huidigeSpeler = huidigeSpeler;
-    else
-        huidigeSpeler = huidigeSpeler + 1;
+        return;
     doeZet(vak_x, vak_y);
 
+    //zorgen dat huidige speler tussen 1 en 2 blijft
+    huidigeSpeler = 3 - huidigeSpeler;
+    //aanpassen textbox wie is aan de beurt
+    WieIsAanDeBeurt(huidigeSpeler);
+    // check of nieuwe speler een zet heeft
+    if (!heeftGeldigeZet(huidigeSpeler))
+    {
+        MessageBox.Show($"Speler {huidigeSpeler} heeft geen geldige zetten en moet overslaan.");
+
+        // speler opnieuw wisselen
+        huidigeSpeler = 3 - huidigeSpeler;
+
+        // check of deze speler ook geen zetten heeft
+        if (!heeftGeldigeZet(huidigeSpeler))
+        {
+            MessageBox.Show("Geen van beide spelers heeft nog geldige zetten. Het spel is afgelopen.");
+        }
+    }
+
+    spelBord.Invalidate();
+}
+
+void WieIsAanDeBeurt(int huidgespeler)
+{
+    if (huidgespeler == 2)
+        isAanDeBeurt.Text = "Rood is aan de beurt!";
+    else isAanDeBeurt.Text = "Blauw is aan de beurt!";
+    isAanDeBeurt.Invalidate();
 }
 
 
-spelBord.MouseMove += muisLocatie;
+
+
 spelBordGrootte.SelectionChangeCommitted += comboBoxVeranderd;
 spelBord.Paint += tekenSpelBord;
 spelBord.MouseClick += klik;
