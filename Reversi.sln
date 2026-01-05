@@ -506,6 +506,7 @@ void startNieuwSpel(object o, EventArgs ea)
     vakjes[bordGrootte / 2, bordGrootte / 2] = 1;
 
     spelBord.Invalidate();
+    hoeveelStenen();
 }
 
 void helpKnopAanpassen(object o, EventArgs ea)
@@ -553,3 +554,4 @@ scherm.Paint += tekenenInterface;
 spelBord.MouseClick += klik;
 scherm.Controls.Add(spelBordGrootte);
 Application.Run(scherm);
+
