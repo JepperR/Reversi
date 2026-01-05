@@ -2,36 +2,120 @@ using System;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Security.Policy;
 using System.Windows.Forms;
 
+//globale waardes
+int offset_x = 25;
+int offset_y = 25;
+
+int vakBreedte = 50;
+int vakHoogte = 50;
+
+Point hier = new Point(0, 0);
+int huidigeSpeler = 2;
+
+//aanmaken window
 Form scherm = new Form();
-scherm.Size = new Size(800, 800);
-scherm.BackColor = (Color.White);
+scherm.MinimumSize = new Size(830, 680);
+scherm.BackColor = (Color.FromArgb(245,246,248));
 scherm.Text = "Reversi";
+
+//aanmaken labels van onderdelen van interface
+//status
+Label status = new Label();
+status.Size = new Size(45, 25);
+status.Text = "STATUS";
+status.Location = new Point(30, 30);
+status.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(status);
+
+Label weergaveStatus = new Label();
+weergaveStatus.Size = new Size(150, 25);
+weergaveStatus.Location = new Point(30, 58);
+weergaveStatus.Text = "Rood begint aan zet";
+weergaveStatus.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(weergaveStatus);
+
+//stand
+Label stand = new Label();
+stand.Size = new Size(45, 25);
+stand.Text = "STAND";
+stand.Location = new Point(30, 100);
+stand.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(stand);
+
+Label aantalStenenRood = new Label();
+aantalStenenRood.Size = new Size(100, 25);
+aantalStenenRood.Text = "Rood: 2 stenen";
+aantalStenenRood.Location = new Point(55,128);
+aantalStenenRood.BackColor = Color.FromArgb(255,255,255);
+scherm.Controls.Add(aantalStenenRood);
+
+Label aantalStenenBlauw = new Label();
+aantalStenenBlauw.Size = new Size(100, 25);
+aantalStenenBlauw.Text = "Blauw: 2 stenen";
+aantalStenenBlauw.Location = new Point(55,153);
+aantalStenenBlauw.BackColor = Color.FromArgb(255,255,255);
+scherm.Controls.Add(aantalStenenBlauw);
+
+//instellingen (bordgrootte kiezen)
+Label instellingen = new Label();
+instellingen.Size = new Size(85, 20);
+instellingen.Text = "INSTELLINGEN";
+instellingen.Location = new Point(30, 200);
+instellingen.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(instellingen);
+
+Label kiesBordGrootte = new Label();
+kiesBordGrootte.Size = new Size(200, 25);
+kiesBordGrootte.Text = "Kies de gewenste bordgrootte:";
+kiesBordGrootte.Location = new Point(30, 230);
+kiesBordGrootte.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(kiesBordGrootte);
 
 //maken uitklaplijst voor opties spelbordgrootte
 ComboBox spelBordGrootte = new ComboBox();
 spelBordGrootte.DropDownStyle = ComboBoxStyle.DropDownList;
-spelBordGrootte.Location = new Point(620, 30);
-spelBordGrootte.Size = new Size(150, 20);
+spelBordGrootte.Location = new Point(30, 255);
+spelBordGrootte.Size = new Size(160, 28);
 spelBordGrootte.Items.AddRange(new object[] { "4", "6", "8", "10" });
 spelBordGrootte.SelectedItem = "6";
 
-//extra textbox om te tonen wie aan de beurt is
+//acties
+Label acties = new Label();
+acties.Size = new Size(45, 25);
+acties.Text = "ACTIES";
+acties.Location = new Point(30, 320);
+acties.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(acties);
+
+//knoppen voor help en nieuw spel
+Button nieuwSpel = new Button();
+nieuwSpel.Size = new Size(160, 36);
+nieuwSpel.Location = new Point(30, 350);
+nieuwSpel.BackColor = Color.FromArgb(37, 99, 235);
+nieuwSpel.Text = "Nieuw spel";
+scherm.Controls.Add(nieuwSpel);
+
+Button help = new Button();
+help.Size = new Size(160, 32);
+help.Location = new Point (30, 395);
+help.BackColor = Color.FromArgb(229, 231, 235);
+help.Text = "Help";
+scherm.Controls.Add (help);
+
+/* kan weg denk ik!
+//extra textbox om te tonen wie aan de beurt is -> nog nodig??
 TextBox isAanDeBeurt = new TextBox();
 isAanDeBeurt.Location = new Point(640, 100);
 isAanDeBeurt.Size = new Size(120, 30);
 isAanDeBeurt.Text = "Rood begint aan zet";
 isAanDeBeurt.ReadOnly = true;
 scherm.Controls.Add(isAanDeBeurt);
+*/
 
-//globale waardes
-int offset_x = 30;
-int offset_y = 30;
-int vakBreedte = 50;
-int vakHoogte = 50;
-Point hier = new Point(0, 0);
-int huidigeSpeler = 2;
 //waardes array berekenen
 int bordGrootte = int.Parse(spelBordGrootte.SelectedItem.ToString());
 int[,] vakjes = new int[bordGrootte, bordGrootte];
@@ -42,16 +126,57 @@ vakjes[bordGrootte / 2, bordGrootte / 2 - 1] = 2;
 vakjes[bordGrootte / 2 - 1, bordGrootte / 2] = 2;
 vakjes[bordGrootte / 2, bordGrootte / 2] = 1;
 
+//tekenen van onderdelen van interface
+void tekenenInterface(object o, PaintEventArgs pea)
+{
+    Graphics gr = pea.Graphics;
+    gr.SmoothingMode = SmoothingMode.AntiAlias;
+
+    //tekenen panelen
+    Brush panel = new SolidBrush(Color.FromArgb(255, 255, 255));
+
+    gr.FillRectangle(panel, 20, 20, 220, 600);
+    gr.FillRectangle(panel, 260, 20, 535, 600);
+    
+    Brush rood = new SolidBrush(Color.Red);
+    Brush blauw = new SolidBrush(Color.Blue);
+
+    Pen grijs = new Pen(Color.FromArgb(107, 114, 128));
+
+    //status
+    gr.DrawLine(grijs, 75, 39, 220, 39);
+
+    //stand
+    gr.FillEllipse(rood, 30, 130, 14, 14);
+    gr.FillEllipse(blauw, 30, 155, 14, 14);
+
+    gr.DrawLine(grijs, 75, 110, 220, 110);
+
+
+    //instellingen
+    gr.DrawLine(grijs, 100, 210, 220, 210);
+
+    //acties
+    gr.DrawLine(grijs, 75, 330, 220, 330);
+}
 
 //tekenen spelbord
 Label spelBord = new Label();
-spelBord.Location = new Point(0 + offset_x, 0 + offset_y);
+spelBord.Location = new Point((270 + (520 - (bordGrootte * 50 +1)) / 2), (640 - (bordGrootte * 50 +1)) / 2);
 scherm.Controls.Add(spelBord);
+
 void updateBordGrootteLabel(int bordGrootte)
 {
-    Bitmap plaatje_spelBord = new Bitmap(50 * bordGrootte + 1, 50 * bordGrootte + 1);
+    int bordGroottePixels = bordGrootte * 50 + 1;
 
-    spelBord.Size = new Size(plaatje_spelBord.Width, plaatje_spelBord.Height);
+    Bitmap plaatje_spelBord = new Bitmap(bordGroottePixels, bordGroottePixels);
+
+    spelBord.Size = new Size(bordGroottePixels, bordGroottePixels);
+    spelBord.Image = plaatje_spelBord;
+
+    spelBord.Location = new Point(270 + (520 - bordGroottePixels) / 2,
+        (640 - bordGroottePixels) / 2);
+
 }
 updateBordGrootteLabel(bordGrootte);
 
@@ -71,8 +196,11 @@ void comboBoxVeranderd(object o, EventArgs ea)
         }
     }
 
+    //nog nodig?
+    /*
     //textbox isAanDeBeurt starttext geven
     isAanDeBeurt.Text = "Rood begint aan zet";
+    */
 
     // startstenen opnieuw plaatsen
     vakjes[bordGrootte / 2 - 1, bordGrootte / 2 - 1] = 1;
@@ -87,11 +215,18 @@ void tekenSpelBord(object o, PaintEventArgs pea)
 {
 
     Graphics gr = pea.Graphics;
+    gr.SmoothingMode = SmoothingMode.AntiAlias;
+
+    Brush vakjesAchtergrond = new SolidBrush(Color.FromArgb(250, 250, 250));
+
     for (int dx = 0; dx < int.Parse(spelBordGrootte.SelectedItem.ToString()); dx++)
     {
         for (int dy = 0; dy < int.Parse(spelBordGrootte.SelectedItem.ToString()); dy++)
         {
             gr.DrawRectangle(Pens.Black, 0 + dx * vakBreedte, 0 + dy * vakHoogte, vakBreedte, vakHoogte);
+            gr.FillRectangle(vakjesAchtergrond, 0 + dx * vakBreedte, 0 + dy * vakHoogte, vakBreedte, vakHoogte);
+
+
         }
     }
 
@@ -105,10 +240,12 @@ void tekenSpelBord(object o, PaintEventArgs pea)
             {
 
                 gr.FillEllipse(blauw, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
+
             }
             if (vakjes[x, y] == 2)
             {
                 gr.FillEllipse(rood, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
+
             }
         }
     }
@@ -116,6 +253,7 @@ void tekenSpelBord(object o, PaintEventArgs pea)
 
 }
 
+//functie die controleert of een zet in een bepaalde x,y-richting zorgt voor het insluiten van een steen van de tegenstander
 bool zorgtVoorInsluiten(int vak_x, int vak_y, int richting_x, int richting_y)
 {
     //bordgrootte bepalen
@@ -157,13 +295,14 @@ bool zorgtVoorInsluiten(int vak_x, int vak_y, int richting_x, int richting_y)
     }
     return false;
 }
+
 //richting omdraaien om alle schijfjes te kunnen controleren
 void draaiRichtingOm(int vak_x, int vak_y, int richting_x, int richting_y)
 {
     int x = vak_x + richting_x;
     int y = vak_y + richting_y;
 
-    // Draai alle stenen om totdat we weer een steen van de huidige speler tegenkomen
+    // draai alle stenen om totdat we weer een steen van de huidige speler tegenkomen
     while (x >= 0 && y >= 0 && x < bordGrootte && y < bordGrootte && vakjes[x, y] != huidigeSpeler)
     {
         if (vakjes[x, y] != 0)
@@ -232,7 +371,7 @@ bool blijfFlippen(int vak_x, int vak_y)
 
             if (zorgtVoorInsluiten(vak_x, vak_y, richting_x, richting_y))
             {
-                draaiRichtingOm(vak_x,vak_y,richting_x, richting_y);
+                draaiRichtingOm(vak_x, vak_y, richting_x, richting_y);
                 isGeflipt = true;
             }
         }
@@ -248,7 +387,7 @@ void doeZet(int vak_x, int vak_y)
 
     int[] richtingen = { -1, 0, 1 };
 
-    // Flipt schijfjes als ze ingesloten zijn
+    // flipt schijfjes als ze ingesloten zijn
     foreach (int rx in richtingen)
     {
         foreach (int ry in richtingen)
@@ -261,14 +400,14 @@ void doeZet(int vak_x, int vak_y)
             }
         }
     }
-    // Blijf flippen zolang er nieuwe insluitingen ontstaan
+    // blijf flippen zolang er nieuwe insluitingen ontstaan
     while (blijfFlippen(vak_x, vak_y))
     {
 
     }
 }
-    //checken of er überhaupt geldige zetten zijn
-    bool heeftGeldigeZet(int speler)
+//checken of er überhaupt geldige zetten zijn
+bool heeftGeldigeZet(int speler)
 {
     for (int x = 0; x < bordGrootte; x++)
     {
@@ -303,8 +442,8 @@ void klik(object o, MouseEventArgs mea)
 
     //zorgen dat huidige speler tussen 1 en 2 blijft
     huidigeSpeler = 3 - huidigeSpeler;
-    //aanpassen textbox wie is aan de beurt
-    WieIsAanDeBeurt(huidigeSpeler);
+    //aanpassen label met status met wie er aan de beurt is
+    wieIsAanDeBeurt(huidigeSpeler);
     // check of nieuwe speler een zet heeft
     if (!heeftGeldigeZet(huidigeSpeler))
     {
@@ -323,19 +462,45 @@ void klik(object o, MouseEventArgs mea)
     spelBord.Invalidate();
 }
 
-void WieIsAanDeBeurt(int huidgespeler)
+//ook nog remise/ wie is winnaar!
+void wieIsAanDeBeurt(int huidgespeler)
 {
     if (huidgespeler == 2)
-        isAanDeBeurt.Text = "Rood is aan de beurt!";
-    else isAanDeBeurt.Text = "Blauw is aan de beurt!";
-    isAanDeBeurt.Invalidate();
+        weergaveStatus.Text = "Rood is aan de beurt!";
+    else weergaveStatus.Text = "Blauw is aan de beurt!";
+    weergaveStatus.Invalidate();
+}
+
+//nieuw spel starten 
+void startNieuwSpel (object o, EventArgs ea)
+{
+    bordGrootte = int.Parse(spelBordGrootte.SelectedItem.ToString());
+    updateBordGrootteLabel(bordGrootte);
+
+    vakjes = new int[bordGrootte, bordGrootte];
+
+    for (int x = 0; x < bordGrootte; x++)
+    {
+        for (int y = 0; y < bordGrootte; y++)
+        {
+            vakjes[x, y] = 0;
+        }
+    }
+
+    // startstenen opnieuw plaatsen
+    vakjes[bordGrootte / 2 - 1, bordGrootte / 2 - 1] = 1;
+    vakjes[bordGrootte / 2, bordGrootte / 2 - 1] = 2;
+    vakjes[bordGrootte / 2 - 1, bordGrootte / 2] = 2;
+    vakjes[bordGrootte / 2, bordGrootte / 2] = 1;
+
+    spelBord.Invalidate();
 }
 
 
-
-
 spelBordGrootte.SelectionChangeCommitted += comboBoxVeranderd;
+nieuwSpel.MouseClick += startNieuwSpel;
 spelBord.Paint += tekenSpelBord;
+scherm.Paint += tekenenInterface;
 spelBord.MouseClick += klik;
 scherm.Controls.Add(spelBordGrootte);
 Application.Run(scherm);
