@@ -186,6 +186,7 @@ void comboBoxVeranderd(object o, EventArgs ea)
     vakjes[bordGrootte / 2, bordGrootte / 2] = 1;
 
     spelBord.Invalidate();
+    hoeveelStenen();
 }
 
 void tekenSpelBord(object o, PaintEventArgs pea)
@@ -554,4 +555,5 @@ scherm.Paint += tekenenInterface;
 spelBord.MouseClick += klik;
 scherm.Controls.Add(spelBordGrootte);
 Application.Run(scherm);
+
 
