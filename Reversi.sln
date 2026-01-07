@@ -12,6 +12,7 @@ int vakHoogte = 50;
 int huidigeSpeler = 1;
 int aantalStenenRood = 0;
 int aantalStenenBlauw = 0;
+int totaalAantalStenen = 0;
 
 //aanmaken window
 Form scherm = new Form();
@@ -416,7 +417,7 @@ void klik(object o, MouseEventArgs mea)
     int vak_x = mea.X / vakBreedte;
     int vak_y = mea.Y / vakHoogte;
     System.Diagnostics.Debug.WriteLine($"{vak_x} {vak_y}");
-    
+
     // check of nieuwe speler een zet heeft
     if (!heeftGeldigeZet(huidigeSpeler))
     {
@@ -426,7 +427,7 @@ void klik(object o, MouseEventArgs mea)
         huidigeSpeler = 3 - huidigeSpeler;
         wieIsAanDeBeurt(huidigeSpeler);
         spelBord.Invalidate();
-        
+
         // check of deze speler ook geen zetten heeft
         if (!heeftGeldigeZet(huidigeSpeler))
         {
@@ -448,17 +449,23 @@ void klik(object o, MouseEventArgs mea)
                 weergaveStatus.Text = "Het is gelijkspel";
                 MessageBox.Show("Het is gelijkspel");
             }
-        }return;
+        }
+        return;
     }
 
     if (!isGeldigeZet(vak_x, vak_y))
         return;
-    doeZet(vak_x,vak_y);
+    doeZet(vak_x, vak_y);
     huidigeSpeler = 3 - huidigeSpeler;
     wieIsAanDeBeurt(huidigeSpeler);
 
+    totaalAantalStenen = aantalStenenBlauw + aantalStenenRood + 1;
+    System.Diagnostics.Debug.WriteLine($"{totaalAantalStenen}");
+
+
     hoeveelStenen();
     spelBord.Invalidate();
+    checkVoorAfgelopen(totaalAantalStenen);
 }
 
 void wieIsAanDeBeurt(int huidgespeler)
@@ -480,13 +487,13 @@ void hoeveelStenen()
         {
             if (vakjes[x, y] == 1)
                 aantalStenenBlauw += 1;
-            if (vakjes[x,y] == 2)
+            if (vakjes[x, y] == 2)
                 aantalStenenRood += 1;
         }
     }
 
     weergaveAantalStenenBlauw.Text = $"Blauw: {aantalStenenBlauw} stenen";
-    weergaveAantalStenenRood.Text = $"Rood: {aantalStenenRood} stenen";   
+    weergaveAantalStenenRood.Text = $"Rood: {aantalStenenRood} stenen";
 }
 
 void startNieuwSpel(object o, EventArgs ea)
@@ -537,7 +544,7 @@ void helpKnopAanpassen(object o, EventArgs ea)
 }
 
 // tekenen van cirkels bij inklikken helpknop
-void helpTeken (object o, PaintEventArgs pea)
+void helpTeken(object o, PaintEventArgs pea)
 {
     Graphics gr = pea.Graphics;
     gr.SmoothingMode = SmoothingMode.AntiAlias;
@@ -546,11 +553,40 @@ void helpTeken (object o, PaintEventArgs pea)
     {
         for (int y = 0; y < bordGrootte; y++)
         {
-            if (isGeldigeZet(x,y))
+            if (isGeldigeZet(x, y))
             {
-                gr.DrawEllipse(Pens.Black, 5 + x * vakBreedte , 5 + y * vakHoogte , 40, 40);
+                gr.DrawEllipse(Pens.Black, 5 + x * vakBreedte, 5 + y * vakHoogte, 40, 40);
             }
         }
+    }
+}
+
+void checkVoorAfgelopen(int totaalAantalStenen)
+{
+    //checken hoeveel vakjes gevuld zijn en spel stoppen indien bord vol is
+    if (totaalAantalStenen == bordGrootte * bordGrootte)
+    {
+        spelBord.Invalidate();
+        MessageBox.Show("Het bord is vol!");
+
+        if (aantalStenenRood > aantalStenenBlauw)
+        {
+            weergaveStatus.Text = "Rood wint!";
+            MessageBox.Show("Rood heeft gewonnen!");
+        }
+
+        if (aantalStenenBlauw > aantalStenenRood)
+        {
+            weergaveStatus.Text = "Blauw wint!";
+            MessageBox.Show("Blauw heeft gewonnen!");
+        }
+
+        if (aantalStenenRood == aantalStenenBlauw)
+        {
+            weergaveStatus.Text = "Het is gelijkspel";
+            MessageBox.Show("Het is gelijkspel");
+        }
+
     }
 }
 
@@ -562,7 +598,3 @@ scherm.Paint += tekenenInterface;
 spelBord.MouseClick += klik;
 scherm.Controls.Add(spelBordGrootte);
 Application.Run(scherm);
-
-
-
-
