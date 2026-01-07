@@ -508,6 +508,9 @@ void startNieuwSpel(object o, EventArgs ea)
 
     spelBord.Invalidate();
     hoeveelStenen();
+
+    huidigeSpeler = 1;
+    weergaveStatus.Text = "Blauw begint aan zet";
 }
 
 void helpKnopAanpassen(object o, EventArgs ea)
@@ -555,5 +558,6 @@ scherm.Paint += tekenenInterface;
 spelBord.MouseClick += klik;
 scherm.Controls.Add(spelBordGrootte);
 Application.Run(scherm);
+
 
 
