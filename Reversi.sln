@@ -187,6 +187,9 @@ void comboBoxVeranderd(object o, EventArgs ea)
 
     spelBord.Invalidate();
     hoeveelStenen();
+
+    huidigeSpeler = 1;
+    weergaveStatus.Text = "Blauw begint aan zet";
 }
 
 void tekenSpelBord(object o, PaintEventArgs pea)
@@ -422,6 +425,7 @@ void klik(object o, MouseEventArgs mea)
         // speler opnieuw wisselen
         huidigeSpeler = 3 - huidigeSpeler;
         wieIsAanDeBeurt(huidigeSpeler);
+        spelBord.Invalidate();
         
         // check of deze speler ook geen zetten heeft
         if (!heeftGeldigeZet(huidigeSpeler))
@@ -558,6 +562,7 @@ scherm.Paint += tekenenInterface;
 spelBord.MouseClick += klik;
 scherm.Controls.Add(spelBordGrootte);
 Application.Run(scherm);
+
 
 
 
