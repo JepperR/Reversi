@@ -14,6 +14,13 @@ int aantalStenenRood = 0;
 int aantalStenenBlauw = 0;
 int totaalAantalStenen = 0;
 
+int r1 = 0;
+int g1 = 0;
+int b1 = 255;
+int r2 = 255;
+int g2 = 0;
+int b2 = 0;
+
 //aanmaken window
 Form scherm = new Form();
 scherm.MinimumSize = new Size(830, 680);
@@ -30,8 +37,8 @@ scherm.Controls.Add(status);
 
 Label weergaveStatus = new Label();
 weergaveStatus.Size = new Size(150, 25);
+weergaveStatus.Text = $"Blauw begint aan zet";
 weergaveStatus.Location = new Point(30, 58);
-weergaveStatus.Text = "Blauw begint aan zet";
 weergaveStatus.BackColor = Color.FromArgb(255, 255, 255);
 scherm.Controls.Add(weergaveStatus);
 
@@ -41,20 +48,6 @@ stand.Text = "STAND";
 stand.Location = new Point(30, 100);
 stand.BackColor = Color.FromArgb(255, 255, 255);
 scherm.Controls.Add(stand);
-
-Label weergaveAantalStenenRood = new Label();
-weergaveAantalStenenRood.Size = new Size(100, 25);
-weergaveAantalStenenRood.Location = new Point(55, 128);
-weergaveAantalStenenRood.Text = "Rood: 2 stenen";
-weergaveAantalStenenRood.BackColor = Color.FromArgb(255, 255, 255);
-scherm.Controls.Add(weergaveAantalStenenRood);
-
-Label weergaveAantalStenenBlauw = new Label();
-weergaveAantalStenenBlauw.Size = new Size(100, 25);
-weergaveAantalStenenBlauw.Location = new Point(55, 153);
-weergaveAantalStenenBlauw.Text = "Blauw: 2 stenen";
-weergaveAantalStenenBlauw.BackColor = Color.FromArgb(255, 255, 255);
-scherm.Controls.Add(weergaveAantalStenenBlauw);
 
 Label instellingen = new Label();
 instellingen.Size = new Size(85, 20);
@@ -73,7 +66,7 @@ scherm.Controls.Add(kiesBordGrootte);
 Label acties = new Label();
 acties.Size = new Size(45, 25);
 acties.Text = "ACTIES";
-acties.Location = new Point(30, 320);
+acties.Location = new Point(30, 335);
 acties.BackColor = Color.FromArgb(255, 255, 255);
 scherm.Controls.Add(acties);
 
@@ -88,14 +81,14 @@ spelBordGrootte.SelectedItem = "6";
 //maken knoppen voor help en nieuw spel
 Button nieuwSpel = new Button();
 nieuwSpel.Size = new Size(160, 36);
-nieuwSpel.Location = new Point(30, 350);
+nieuwSpel.Location = new Point(30, 365);
 nieuwSpel.BackColor = Color.FromArgb(37, 99, 235);
 nieuwSpel.Text = "Nieuw spel";
 scherm.Controls.Add(nieuwSpel);
 
 Button help = new Button();
 help.Size = new Size(160, 32);
-help.Location = new Point(30, 395);
+help.Location = new Point(30, 410);
 help.BackColor = Color.FromArgb(229, 231, 235);
 help.Text = "Help";
 scherm.Controls.Add(help);
@@ -122,8 +115,8 @@ void tekenenInterface(object o, PaintEventArgs pea)
     gr.FillRectangle(panel, 20, 20, 220, 600);
     gr.FillRectangle(panel, 260, 20, 535, 600);
 
-    Brush rood = new SolidBrush(Color.Red);
-    Brush blauw = new SolidBrush(Color.Blue);
+    Brush speler_1 = new SolidBrush(Color.FromArgb(r1, g1, b1));
+    Brush speler_2 = new SolidBrush(Color.FromArgb(r2, g2, b2));
 
     Pen grijs = new Pen(Color.FromArgb(107, 114, 128));
 
@@ -131,8 +124,8 @@ void tekenenInterface(object o, PaintEventArgs pea)
     gr.DrawLine(grijs, 75, 39, 220, 39);
 
     //stand
-    gr.FillEllipse(rood, 30, 130, 14, 14);
-    gr.FillEllipse(blauw, 30, 155, 14, 14);
+    gr.FillEllipse(speler_2, 30, 130, 14, 14);
+    gr.FillEllipse(speler_1, 30, 155, 14, 14);
 
     gr.DrawLine(grijs, 75, 110, 220, 110);
 
@@ -141,13 +134,103 @@ void tekenenInterface(object o, PaintEventArgs pea)
     gr.DrawLine(grijs, 100, 210, 220, 210);
 
     //acties
-    gr.DrawLine(grijs, 75, 330, 220, 330);
+    gr.DrawLine(grijs, 75, 345, 220, 345);
+
 }
 
 //tekenen spelbord
 Label spelBord = new Label();
 spelBord.Location = new Point((270 + (520 - (bordGrootte * 50 + 1)) / 2), (640 - (bordGrootte * 50 + 1)) / 2);
 scherm.Controls.Add(spelBord);
+
+//keuze kleurenscherm knop
+Button kleurenKeuze = new Button();
+kleurenKeuze.Location = new Point(30, 285);
+kleurenKeuze.Size = new Size(160, 40);
+kleurenKeuze.Text = "Verander Kleur";
+scherm.Controls.Add(kleurenKeuze);
+
+Bitmap kleurenVoorbeeld = new Bitmap(500, 500);
+Label kleurenLabel = new Label();
+scherm.Controls.Add(kleurenLabel);
+
+//toevoegen comboboxen voor keuzes kleur
+ComboBox kleurSpeler_1 = new ComboBox();
+kleurSpeler_1.Size = new Size(100, 100);
+kleurSpeler_1.Location = new Point(130, 300);
+scherm.Controls.Add(kleurSpeler_1);
+kleurSpeler_1.Parent = kleurenLabel;
+kleurSpeler_1.DropDownStyle = ComboBoxStyle.DropDownList;
+kleurSpeler_1.Items.AddRange(new object[] { "Blauw", "Groen", "Geel", "Oranje", "Rood", "Paars", "Zwart" });
+kleurSpeler_1.SelectedItem = "Blauw";
+
+ComboBox kleurSpeler_2 = new ComboBox();
+kleurSpeler_2.Size = new Size(100, 100);
+kleurSpeler_2.Location = new Point(330, 300);
+scherm.Controls.Add(kleurSpeler_2);
+kleurSpeler_2.Parent = kleurenLabel;
+kleurSpeler_2.DropDownStyle = ComboBoxStyle.DropDownList;
+kleurSpeler_2.Items.AddRange(new object[] { "Blauw", "Groen", "Geel", "Oranje", "Rood", "Paars", "Zwart" });
+kleurSpeler_2.SelectedItem = "Rood";
+
+Label speler_1_Kleur = new Label();
+Label speler_2_Kleur = new Label();
+scherm.Controls.Add(speler_1_Kleur);
+scherm.Controls.Add(speler_2_Kleur);
+Label oepsieDubbel = new Label();
+
+Label weergaveAantalStenenRood = new Label();
+weergaveAantalStenenRood.Size = new Size(100, 25);
+weergaveAantalStenenRood.Location = new Point(55, 128);
+weergaveAantalStenenRood.Text = $"{kleurSpeler_2.SelectedItem}: 2 stenen";
+weergaveAantalStenenRood.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(weergaveAantalStenenRood);
+
+Label weergaveAantalStenenBlauw = new Label();
+weergaveAantalStenenBlauw.Size = new Size(100, 25);
+weergaveAantalStenenBlauw.Location = new Point(55, 153);
+weergaveAantalStenenBlauw.Text = $"{kleurSpeler_2.SelectedItem}: 2 stenen";
+weergaveAantalStenenBlauw.BackColor = Color.FromArgb(255, 255, 255);
+scherm.Controls.Add(weergaveAantalStenenBlauw);
+void kleurenKnop(object o, EventArgs ea)
+{
+    if (kleurenKeuze.Text == "Verander Kleur")
+    {
+        //maken nieuw label voor kleurenselectie
+        spelBord.Size = new Size(0, 0);
+        kleurenKeuze.Text = "Terug naar spel";
+        kleurenKeuze.Location = new Point(450, 550);
+        kleurenLabel.Size = new Size(500, 500);
+        kleurenLabel.Location = new Point(275, 20);
+        kleurenLabel.BackColor = Color.Transparent;
+
+        speler_1_Kleur.Text = "Speler 1 is blauw";
+        speler_1_Kleur.Location = new Point(130, 270);
+        speler_1_Kleur.Size = new Size(100, 20);
+        speler_1_Kleur.Parent = kleurenLabel;
+        speler_2_Kleur.Text = "Speler 2 is rood";
+        speler_2_Kleur.Location = new Point(330, 270);
+        speler_2_Kleur.Size = new Size(100, 20);
+        speler_2_Kleur.Parent = kleurenLabel;
+        kleurenKeuze.Click += startNieuwSpel;
+        scherm.Controls.Remove(spelBord);
+        return;
+    }
+    if (kleurenKeuze.Text == "Terug naar spel")
+    {
+        //verdwijnen label wanneer deze niet meer in beeld moet zijn
+        int bordGroottePixels = bordGrootte * 50 + 1;
+        spelBord.Size = new Size(bordGroottePixels, bordGroottePixels);
+        kleurenKeuze.Text = "Verander Kleur";
+        kleurenKeuze.Location = new Point(30, 285);
+        kleurenLabel.Size = new Size(0, 0);
+        scherm.Controls.Remove(speler_1_Kleur);
+        scherm.Controls.Remove(speler_2_Kleur);
+        scherm.Controls.Add(spelBord);
+        kleurenKeuze.Click += startNieuwSpel;
+        return;
+    }
+}
 
 void updateBordGrootteLabel(int bordGrootte)
 {
@@ -190,7 +273,7 @@ void comboBoxVeranderd(object o, EventArgs ea)
     hoeveelStenen();
 
     huidigeSpeler = 1;
-    weergaveStatus.Text = "Blauw begint aan zet";
+    weergaveStatus.Text = $"{kleurSpeler_1.SelectedItem} begint aan zet";
 }
 
 void tekenSpelBord(object o, PaintEventArgs pea)
@@ -212,8 +295,8 @@ void tekenSpelBord(object o, PaintEventArgs pea)
         }
     }
 
-    Brush rood = new SolidBrush(Color.Red);
-    Brush blauw = new SolidBrush(Color.Blue);
+    Brush speler_1 = new SolidBrush(Color.FromArgb(r1, g1, b1));
+    Brush speler_2 = new SolidBrush(Color.FromArgb(r2, g2, b2));
     for (int x = 0; x < bordGrootte; x++)
     {
         for (int y = 0; y < bordGrootte; y++)
@@ -221,12 +304,12 @@ void tekenSpelBord(object o, PaintEventArgs pea)
             if (vakjes[x, y] == 1)
             {
 
-                gr.FillEllipse(blauw, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
+                gr.FillEllipse(speler_1, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
 
             }
             if (vakjes[x, y] == 2)
             {
-                gr.FillEllipse(rood, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
+                gr.FillEllipse(speler_2, 0 + x * vakBreedte, 0 + y * vakHoogte, vakBreedte, vakHoogte);
 
             }
         }
@@ -410,6 +493,13 @@ bool heeftGeldigeZet(int speler)
     }
     return false;
 }
+void wieIsAanDeBeurt(int huidgespeler)
+{
+    if (huidgespeler == 2)
+        weergaveStatus.Text = $"{kleurSpeler_2.SelectedItem} is aan de beurt!";
+    else weergaveStatus.Text = $"{kleurSpeler_1.SelectedItem} is aan de beurt!";
+    weergaveStatus.Invalidate();
+}
 
 // muisklik tracken
 void klik(object o, MouseEventArgs mea)
@@ -434,14 +524,14 @@ void klik(object o, MouseEventArgs mea)
             MessageBox.Show("Geen van beide spelers heeft nog geldige zetten. Het spel is afgelopen.");
             if (aantalStenenRood > aantalStenenBlauw)
             {
-                weergaveStatus.Text = "Rood wint!";
-                MessageBox.Show("Rood heeft gewonnen!");
+                weergaveStatus.Text = $"{kleurSpeler_2.SelectedItem} wint!";
+                MessageBox.Show($"{kleurSpeler_2.SelectedItem} heeft gewonnen!");
             }
 
             if (aantalStenenBlauw > aantalStenenRood)
             {
-                weergaveStatus.Text = "Blauw wint!";
-                MessageBox.Show("Blauw heeft gewonnen!");
+                weergaveStatus.Text = $"{kleurSpeler_1.SelectedItem} wint!";
+                MessageBox.Show($"{kleurSpeler_1.SelectedItem} heeft gewonnen!");
             }
 
             if (aantalStenenRood == aantalStenenBlauw)
@@ -468,13 +558,6 @@ void klik(object o, MouseEventArgs mea)
     checkVoorAfgelopen(totaalAantalStenen);
 }
 
-void wieIsAanDeBeurt(int huidgespeler)
-{
-    if (huidgespeler == 2)
-        weergaveStatus.Text = "Rood is aan de beurt!";
-    else weergaveStatus.Text = "Blauw is aan de beurt!";
-    weergaveStatus.Invalidate();
-}
 
 void hoeveelStenen()
 {
@@ -492,8 +575,8 @@ void hoeveelStenen()
         }
     }
 
-    weergaveAantalStenenBlauw.Text = $"Blauw: {aantalStenenBlauw} stenen";
-    weergaveAantalStenenRood.Text = $"Rood: {aantalStenenRood} stenen";
+    weergaveAantalStenenBlauw.Text = $"{kleurSpeler_1.SelectedItem}: {aantalStenenBlauw} stenen";
+    weergaveAantalStenenRood.Text = $"{kleurSpeler_2.SelectedItem}: {aantalStenenRood} stenen";
 }
 
 void startNieuwSpel(object o, EventArgs ea)
@@ -521,7 +604,7 @@ void startNieuwSpel(object o, EventArgs ea)
     hoeveelStenen();
 
     huidigeSpeler = 1;
-    weergaveStatus.Text = "Blauw begint aan zet";
+    weergaveStatus.Text = $"{kleurSpeler_1.SelectedItem} begint aan zet";
 }
 
 void helpKnopAanpassen(object o, EventArgs ea)
@@ -571,14 +654,14 @@ void checkVoorAfgelopen(int totaalAantalStenen)
 
         if (aantalStenenRood > aantalStenenBlauw)
         {
-            weergaveStatus.Text = "Rood wint!";
-            MessageBox.Show("Rood heeft gewonnen!");
+            weergaveStatus.Text = $"{kleurSpeler_2.SelectedItem} wint!";
+            MessageBox.Show($"{kleurSpeler_2.SelectedItem} heeft gewonnen!");
         }
 
         if (aantalStenenBlauw > aantalStenenRood)
         {
-            weergaveStatus.Text = "Blauw wint!";
-            MessageBox.Show("Blauw heeft gewonnen!");
+            weergaveStatus.Text = $"{kleurSpeler_1.SelectedItem} wint!";
+            MessageBox.Show($"{kleurSpeler_1.SelectedItem} heeft gewonnen!");
         }
 
         if (aantalStenenRood == aantalStenenBlauw)
@@ -590,11 +673,169 @@ void checkVoorAfgelopen(int totaalAantalStenen)
     }
 }
 
+void kiesKleur(object o, PaintEventArgs pea)
+{
+    if (kleurenKeuze.Text == "Terug naar spel")
+    {
+        Graphics gr = pea.Graphics;
+        gr.SmoothingMode = SmoothingMode.AntiAlias;
+
+        Brush speler_1 = new SolidBrush(Color.FromArgb(r1, g1, b1));
+        Brush speler_2 = new SolidBrush(Color.FromArgb(r2, g2, b2));
+        gr.FillEllipse(speler_1, 100, 100, 150, 150);
+        gr.FillEllipse(speler_2, 300, 100, 150, 150);
+
+    }
+}
+//kleuren instellen bij comboboxen
+void kleurComboBoxSpeler_1(object o, EventArgs ea)
+{
+    speler_1_Kleur.Text = $"Speler 1 is {kleurSpeler_1.SelectedItem}";
+    weergaveStatus.Text = $"{kleurSpeler_1.SelectedItem} begint aan zet";
+    Brush speler_2 = new SolidBrush(Color.FromArgb(r2, g2, b2));
+
+    if (kleurSpeler_1.SelectedItem == "Blauw")
+    {
+        r1 = 0;
+        b1 = 255;
+        g1 = 0;
+    }
+    if (kleurSpeler_1.SelectedItem == "Groen")
+    {
+        r1 = 0;
+        b1 = 0;
+        g1 = 255;
+    }
+    if (kleurSpeler_1.SelectedItem == "Geel")
+    {
+        r1 = 255;
+        b1 = 0;
+        g1 = 255;
+    }
+    if (kleurSpeler_1.SelectedItem == "Oranje")
+    {
+        r1 = 255;
+        b1 = 0;
+        g1 = 128;
+    }
+    if (kleurSpeler_1.SelectedItem == "Rood")
+    {
+        r1 = 255;
+        b1 = 0;
+        g1 = 0;
+    }
+    if (kleurSpeler_1.SelectedItem == "Paars")
+    {
+        r1 = 170;
+        b1 = 255;
+        g1 = 0;
+    }
+    if (kleurSpeler_1.SelectedItem == "Zwart")
+    {
+        r1 = 0;
+        b1 = 0;
+        g1 = 0;
+    }
+    kleurenLabel.Invalidate();
+    kleurSpeler_1.Invalidate();
+    scherm.Invalidate();
+    weergaveStatus.Invalidate();
+    speler_1_Kleur.Invalidate();
+
+    weergaveAantalStenenBlauw.Text = $"{kleurSpeler_1.SelectedItem}: 2 stenen";
+}
+void kleurComboBoxSpeler_2(object o, EventArgs ea)
+{
+    speler_2_Kleur.Text = $"Speler 2 is {kleurSpeler_2.SelectedItem}";
+    Brush speler_2 = new SolidBrush(Color.FromArgb(r2, g2, b2));
+
+    if (kleurSpeler_2.SelectedItem == "Blauw")
+    {
+        r2 = 0;
+        b2 = 255;
+        g2 = 0;
+    }
+    if (kleurSpeler_2.SelectedItem == "Groen")
+    {
+        r2 = 0;
+        b2 = 0;
+        g2 = 255;
+    }
+    if (kleurSpeler_2.SelectedItem == "Geel")
+    {
+        r2 = 255;
+        b2 = 0;
+        g2 = 255;
+    }
+    if (kleurSpeler_2.SelectedItem == "Oranje")
+    {
+        r2 = 255;
+        b2 = 0;
+        g2 = 128;
+    }
+    if (kleurSpeler_2.SelectedItem == "Rood")
+    {
+        r2 = 255;
+        b2 = 0;
+        g2 = 0;
+    }
+    if (kleurSpeler_2.SelectedItem == "Paars")
+    {
+        r2 = 170;
+        b2 = 255;
+        g2 = 0;
+    }
+    if (kleurSpeler_2.SelectedItem == "Zwart")
+    {
+        r2 = 0;
+        b2 = 0;
+        g2 = 0;
+    }
+    kleurenLabel.Invalidate();
+    kleurSpeler_2.Invalidate();
+    speler_2_Kleur.Invalidate();
+    scherm.Invalidate();
+    weergaveStatus.Invalidate();
+    status.Invalidate();
+
+    weergaveAantalStenenRood.Text = $"{kleurSpeler_2.SelectedItem}: 2 stenen";
+}
+
+//check tegen dubbele kleuren en voorkomen dat het spel dan doorgaat
+void checkVoorDubbel(object o, EventArgs ea)
+{
+    if (kleurSpeler_1.SelectedItem == kleurSpeler_2.SelectedItem)
+    {
+        scherm.Controls.Remove(kleurenKeuze);
+        oepsieDubbel.Location = new Point(200, 440);
+        oepsieDubbel.ForeColor = Color.Red;
+        oepsieDubbel.Text = "De schijfjes mogen niet dezelfde kleur hebben!";
+        oepsieDubbel.Size = new Size(200, 100);
+        scherm.Controls.Add(oepsieDubbel);
+        oepsieDubbel.Parent = kleurenLabel;
+        kleurenLabel.Invalidate();
+    }
+    else
+    {
+        scherm.Controls.Add(kleurenKeuze);
+        oepsieDubbel.Text = "";
+    }
+
+}
+
+kleurSpeler_1.SelectionChangeCommitted += checkVoorDubbel;
+kleurSpeler_2.SelectionChangeCommitted += checkVoorDubbel;
+kleurSpeler_1.SelectionChangeCommitted += kleurComboBoxSpeler_1;
+kleurSpeler_2.SelectionChangeCommitted += kleurComboBoxSpeler_2;
+kleurenKeuze.Click += kleurenKnop;
+
 help.Click += helpKnopAanpassen;
 spelBordGrootte.SelectionChangeCommitted += comboBoxVeranderd;
 nieuwSpel.MouseClick += startNieuwSpel;
+kleurenLabel.Paint += kiesKleur;
 spelBord.Paint += tekenSpelBord;
 scherm.Paint += tekenenInterface;
 spelBord.MouseClick += klik;
 scherm.Controls.Add(spelBordGrootte);
+
 Application.Run(scherm);
